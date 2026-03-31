@@ -28,8 +28,9 @@ architecture top_basys3_arch of top_basys3 is
     signal w_clk : std_logic;
     signal w_floor : std_logic_vector(3 downto 0);
     signal w_an : std_logic_vector(3 downto 0);
-    signal w_seg : std_logic_vector(0 downto 6);
-    signal w_clkyon
+    signal w_seg : std_logic_vector(6 downto 0);
+    signal w_mclk : std_logic;
+    signal w_melevcon : std_logic;
     
   
 	-- component declarations
@@ -79,14 +80,14 @@ begin
         generic map ( k_DIV => 100000000) -- 0.5s between floors
         port map (
             i_clk   => clk,
-            i_reset => btnL,
+            i_reset => w_mclk,
             o_clk   => w_clk
         );
         
     elevcontrol : elevator_controller_fsm
         port map (
             i_clk        => w_clk,
-            i_reset      => btnR,
+            i_reset      => w_melevcon,
             is_stopped   => sw(0),
             go_up_down   => sw(1),
             o_floor      => w_floor
@@ -126,6 +127,10 @@ begin
 	an(3) <= '1';
 	
 	-- reset signals
+	w_mclk <= btnU when (btnU='1') else
+	          btnL;
+	w_melevcon <= btnU when (btnU='1') else
+	              btnR;
 	
 	
 end top_basys3_arch;
