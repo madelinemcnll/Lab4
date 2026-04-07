@@ -26,11 +26,12 @@ architecture top_basys3_arch of top_basys3 is
 
     -- signal declarations
     signal w_clk : std_logic; -- connects o_clk to i_clk
-    signal w_floor : std_logic_vector(3 downto 0); -- connects o_floor ti i_Hex
-    --signal w_an : std_logic_vector(3 downto 0);
-    --signal w_seg : std_logic_vector(6 downto 0);
+    signal w_floor_1 : std_logic_vector(3 downto 0); -- connects o_floor ti i_Hex
     signal w_mclk : std_logic;
     signal w_melevcon : std_logic;
+    signal w_clk_tdm : std_logic;
+    signal w_floor_2 : std_logic_vector(3 downto 0); 
+    signal w_decoder :std_logic_vector(3 downto 0);
     
   
 	-- component declarations
@@ -50,6 +51,7 @@ architecture top_basys3_arch of top_basys3 is
             o_floor : out STD_LOGIC_VECTOR (3 downto 0)		   
 		 );
 	end component elevator_controller_fsm;
+	
 	
 	component TDM4 is
 		generic ( constant k_WIDTH : natural  := 4); -- bits in input and output
@@ -77,25 +79,55 @@ architecture top_basys3_arch of top_basys3 is
 begin
 	-- PORT MAPS ----------------------------------------
     clkdiv_inst : clock_divider
-        generic map ( k_DIV => 100000000) -- 0.5s between floors
+        generic map ( k_DIV => 20000000) -- 0.5s between floors
         port map (
             i_clk   => clk,
             i_reset => w_mclk,
             o_clk   => w_clk
         );
         
-    elevcontrol : elevator_controller_fsm
+    clkdiv_inst_TDM : clock_divider
+        generic map ( k_DIV => 200000) -- 0.5s between floors
+        port map (
+            i_clk   => clk,
+            i_reset => w_mclk,
+            o_clk   => w_clk_tdm
+        );
+        
+    elevcontrol1 : elevator_controller_fsm
         port map (
             i_clk        => w_clk,
             i_reset      => w_melevcon,
             is_stopped   => sw(0),
             go_up_down   => sw(1),
-            o_floor      => w_floor
+            o_floor      => w_floor_1
         );
         
+    elevcontrol2 : elevator_controller_fsm
+        port map (
+            i_clk        => w_clk,
+            i_reset      => w_melevcon,
+            is_stopped   => sw(14),
+            go_up_down   => sw(15),
+            o_floor      => w_floor_2
+        );
+    
+    TDM : TDM4
+        port map (
+           i_clk		=> w_clk_tdm,
+           i_reset		=> btnU,
+           i_D3 		=> "1111",
+		   i_D2 		=> w_floor_2,
+		   i_D1 		=> "1111",
+		   i_D0 		=> w_floor_1,
+		   o_data		=> w_decoder,
+		   o_sel        => an
+        );
+    
+    
     decoder : sevenseg_decoder
         port map (
-            i_Hex   => w_floor,
+            i_Hex   => w_decoder,
             o_seg_n => seg
         );
 	
@@ -121,10 +153,7 @@ begin
 	
 	-- leave unused switches UNCONNECTED. Ignore any warnings this causes.
 	-- set anodes to off for wanted display
-	an(0) <= '0';
-	an(1) <= '1';
-	an(2) <= '1';
-	an(3) <= '1';
+
 	
 	-- reset signals
 	w_mclk <= btnU when (btnU='1') else
