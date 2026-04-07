@@ -25,10 +25,10 @@ end top_basys3;
 architecture top_basys3_arch of top_basys3 is
 
     -- signal declarations
-    signal w_clk : std_logic;
-    signal w_floor : std_logic_vector(3 downto 0);
-    signal w_an : std_logic_vector(3 downto 0);
-    signal w_seg : std_logic_vector(6 downto 0);
+    signal w_clk : std_logic; -- connects o_clk to i_clk
+    signal w_floor : std_logic_vector(3 downto 0); -- connects o_floor ti i_Hex
+    --signal w_an : std_logic_vector(3 downto 0);
+    --signal w_seg : std_logic_vector(6 downto 0);
     signal w_mclk : std_logic;
     signal w_melevcon : std_logic;
     
@@ -96,7 +96,7 @@ begin
     decoder : sevenseg_decoder
         port map (
             i_Hex   => w_floor,
-            o_seg_n => w_seg
+            o_seg_n => seg
         );
 	
 	-- CONCURRENT STATEMENTS ----------------------------
